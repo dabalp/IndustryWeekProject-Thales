@@ -94,7 +94,7 @@ class TorchModel(nn.Module):
                 self.layer_outputs[1].append(self.output2.cpu().detach().numpy().flatten())
 
             for i in range(2):
-                tree = KDTree(self.layer_outputs[i])
+                tree = KDTree(np.array(self.layer_outputs[i]))
                 self.tree_list.append(tree)
 
     def test_data(self):
@@ -109,6 +109,8 @@ class TorchModel(nn.Module):
 
                 dis1, nn1 = self.tree_list[0].query([self.output1], k=N_NEIGHBOURS)
                 dis2, nn2 = self.tree_list[1].query([self.output2], k=N_NEIGHBOURS)
+                
+                print(dis1, dis2, nn1, nn2)
 
                 for idx, i in enumerate(output):
                     if torch.argmax(i) == y[idx]:

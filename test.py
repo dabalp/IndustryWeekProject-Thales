@@ -1,12 +1,16 @@
-from sklearn import datasets
-import cv2
-import numpy as np
+from model import TorchModel
+import torch 
 
 
-X, y = datasets.fetch_openml('mnist_784', version=1, return_X_y=True, data_home='data/')
+def train():
+    n = TorchModel()
+    n.load_data()
+    n.batch_train()
+    torch.save(n.state_dict(), "params.pt")
 
-img = np.array(X[0]).reshape((28, 28))
-img = cv2.resize(img, (200, 200))
-cv2.imshow('test', img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+def load_test():
+    n = torch.load("params.pt")
+    n.test_data()
+
+train()
+load_test()

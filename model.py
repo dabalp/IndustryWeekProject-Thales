@@ -86,6 +86,22 @@ class TorchModel(nn.Module):
         self.testset = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE, 
             shuffle=False)
 
+    def test_data(self):
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+            for data in self.testset:
+                X, y = data
+                X, y = X.to(self.device), y.to(self.device)
+                output = self(X)
+                for idx, i in enumerate(output):
+                    if torch.argmax(i) == y[idx]:
+                        correct += 1
+                    total += 1
+        print("Accuracy", round(correct/total, 3)) 
+
+
 
 
 if __name__ == "__main__":
@@ -93,6 +109,8 @@ if __name__ == "__main__":
     n.load_data()
     n.batch_train()
     torch.save(n.state_dict(), "params.pt")
+    n.test_data()
+
     # a = np.random.uniform(size=IMAGE_SIZE)
     # a = torch.Tensor(a).view(-1, 1, IMAGE_SIZE[0], IMAGE_SIZE[1])
     # n.forward(a)

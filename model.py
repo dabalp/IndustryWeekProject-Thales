@@ -41,7 +41,7 @@ class TorchModel(nn.Module):
 
         self.load_data()
 
-        self.layer_outputs = [np.array([]), np.array([])]
+        self.layer_outputs = [[], []]
         self.tree_list = []
         self.label_list = []
 
@@ -80,10 +80,8 @@ class TorchModel(nn.Module):
         test = datasets.MNIST("", train=False, download=True,
                               transform=transforms.Compose([transforms.ToTensor()]))
 
-        self.trainset = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE,
-                                                    shuffle=True)
-        self.testset = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE,
-                                                   shuffle=False)
+        self.trainset = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
+        self.testset = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE, shuffle=False)
 
     def prepare_neighbours(self):
         with torch.no_grad():
@@ -92,8 +90,8 @@ class TorchModel(nn.Module):
                 X, y = X.to(self.device), y.to(self.device)
                 output = self(X)
                 self.label_list.append(output)
-                self.layer_outputs[0] = np.concatenate((self.layer_outputs[0], self.output1.cpu().detach().numpy().flatten()))
-                self.layer_outputs[1] = np.concatenate((self.layer_outputs[1], self.output2.cpu().detach().numpy().flatten()))
+                self.layer_outputs[0].append(self.output1.cpu().detach().numpy().flatten())
+                self.layer_outputs[1].append(self.output2.cpu().detach().numpy().flatten())
 
             for i in range(2):
                 tree = KDTree(self.layer_outputs[i])

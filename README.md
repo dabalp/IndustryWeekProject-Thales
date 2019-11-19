@@ -1,8 +1,10 @@
 # IndustryWeekProject-Thales
+
 Industry Week Project 18-22 November 2019 in collaboration with Thales.
 The project's aim is to develop a framework to improve the confidence of Deep Learning networks by reviewing state-of-the-art algorithms and discussing possible alternatives.
 
 ## Getting Started
+
 
 ### Prerequisites
 
@@ -28,10 +30,21 @@ PyTorch
 ```
 conda install -c pytorch pytorch 
 ```
+
+Other
+```
+conda install -c conda-forge matplotlib 
+conda install -c conda-forge tqdm
+conda install -c anaconda scikit-learn
+conda install -c pytorch torchvision
+```
+
+
 ## Running the tests
 ```
 jupyter notebook 
 ```
+
 
 ## Authors
 

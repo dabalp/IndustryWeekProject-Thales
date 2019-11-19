@@ -21,6 +21,7 @@ def test_neighbours():
     n = TorchModel()
     n.load_state_dict(torch.load("params.pt"))
     n.prepare_neighbours()
+    n.test_data()
 
 #train()
 # load_test()

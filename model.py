@@ -6,10 +6,12 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 from torchvision import transforms, datasets
+from sklearn.neighbors import KDTree
 
 BATCH_SIZE = 100
 EPOCHS = 3
 NUM_CLASSES = 10
+N_NEIGHBOURS = 60
 IMAGE_SIZE = (28, 28)
 
 
@@ -37,11 +39,17 @@ class TorchModel(nn.Module):
         self.loss_function = nn.NLLLoss()
         self.optimizer = optim.Adam(self.parameters(), lr=0.001)
 
+        self.load_data()
+
+        self.layer_outputs = [np.array([]), np.array([])]
+        self.tree_list = []
+        self.label_list = []
+
     def forward(self, x):
         x = x.to(self.device)
-        x = self.pool1(F.relu(self.conv1(x)))
-        x = self.pool2(F.relu(self.conv2(x)))
-        x = self.dropout1(x)
+        self.output1 = self.pool1(F.relu(self.conv1(x)))
+        self.output2 = self.pool2(F.relu(self.conv2(self.output1)))
+        x = self.dropout1(self.output2)
 
         # print(x[0].shape[0] * x[0].shape[1] * x[0].shape[2])
 
@@ -54,19 +62,10 @@ class TorchModel(nn.Module):
 
     def batch_train(self):
         for epoch in range(EPOCHS):
-            # for i in tqdm(range(0, len(self.trainset), BATCH_SIZE)):
             for data in self.trainset:
-            # for i in range(len(self.trainset)):
-                # print(self.trainset.size())
-                # break
-                # self.train_X, self.train_y = self.trainset[i: i+BATCH_SIZE]
-                # batch_X = self.train_X[i:i + BATCH_SIZE].view(-1, 1, IMAGE_SIZE[0], IMAGE_SIZE[1])
-                # batch_y = self.train_y[i:i + BATCH_SIZE]
-                
-                # batch_X, batch_y = self.trainset
                 batch_X, batch_y = data
                 batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)
-                
+
                 self.zero_grad()
                 outputs = self(batch_X)
                 loss = self.loss_function(outputs, batch_y)
@@ -75,16 +74,30 @@ class TorchModel(nn.Module):
             print(loss)
 
     def load_data(self):
-        train = datasets.MNIST("", train=True, download=True, 
-            transform=transforms.Compose([transforms.ToTensor()]))
-  
-        test = datasets.MNIST("", train=False, download=True, 
-            transform=transforms.Compose([transforms.ToTensor()]))
+        train = datasets.MNIST("", train=True, download=True,
+                               transform=transforms.Compose([transforms.ToTensor()]))
 
-        self.trainset = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE, 
-            shuffle=True)
-        self.testset = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE, 
-            shuffle=False)
+        test = datasets.MNIST("", train=False, download=True,
+                              transform=transforms.Compose([transforms.ToTensor()]))
+
+        self.trainset = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE,
+                                                    shuffle=True)
+        self.testset = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE,
+                                                   shuffle=False)
+
+    def prepare_neighbours(self):
+        with torch.no_grad():
+            for data in tqdm(self.trainset):
+                X, y = data
+                X, y = X.to(self.device), y.to(self.device)
+                output = self(X)
+                self.label_list.append(output)
+                self.layer_outputs[0] = np.concatenate((self.layer_outputs[0], self.output1.cpu().detach().numpy().flatten()))
+                self.layer_outputs[1] = np.concatenate((self.layer_outputs[1], self.output2.cpu().detach().numpy().flatten()))
+
+            for i in range(2):
+                tree = KDTree(self.layer_outputs[i])
+                self.tree_list.append(tree)
 
     def test_data(self):
         correct = 0
@@ -95,13 +108,15 @@ class TorchModel(nn.Module):
                 X, y = data
                 X, y = X.to(self.device), y.to(self.device)
                 output = self(X)
+
+                dis1, nn1 = self.tree_list[0].query([self.output1], k=N_NEIGHBOURS)
+                dis2, nn2 = self.tree_list[1].query([self.output2], k=N_NEIGHBOURS)
+
                 for idx, i in enumerate(output):
                     if torch.argmax(i) == y[idx]:
                         correct += 1
                     total += 1
-        print("Accuracy", round(correct/total, 3)) 
-
-
+        print("Accuracy", round(correct / total, 3))
 
 
 if __name__ == "__main__":

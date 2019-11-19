@@ -9,8 +9,10 @@ def train():
     torch.save(n.state_dict(), "params.pt")
 
 def load_test():
-    n = torch.load("params.pt")
+    n = TorchModel()
+    n.load_data()
+    n.load_state_dict(torch.load("params.pt"))
     n.test_data()
 
-train()
+#train()
 load_test()

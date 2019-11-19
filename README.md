@@ -39,7 +39,8 @@ jupyter notebook
 * **Mihai Anca**
 * **Athanasios Martsopoulos**
 * **Aidan Scannell**
-* **Charles **
+* **Charles Clarke**
+* **Avgi Stavrou**
 
 ## License
 
